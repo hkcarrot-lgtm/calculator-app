@@ -2,7 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>起名 · 承古启今</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,12 +24,23 @@
             --五行水: #2e4a6b;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            min-height: 100%;
+            min-height: -webkit-fill-available;
+        }
         body {
             font-family: 'Noto Serif SC', 'KaiTi', '楷体', 'SimSun', serif;
             background: linear-gradient(180deg, #1a1510 0%, #2c2416 30%, #3d3428 100%);
             min-height: 100vh;
+            min-height: 100dvh;
+            min-height: -webkit-fill-available;
             color: var(--墨);
             padding: 20px;
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
+            padding-top: max(20px, env(safe-area-inset-top));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            -webkit-tap-highlight-color: transparent;
         }
         .wrap {
             max-width: 520px;
@@ -39,6 +52,7 @@
             overflow: hidden;
         }
         .header {
+            position: relative;
             background: linear-gradient(135deg, var(--朱红) 0%, #6b1f32 100%);
             color: var(--金);
             padding: 24px 20px;
@@ -76,7 +90,7 @@
             border-radius: 6px;
             background: #fff;
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 16px; /* ≥16px 避免 iOS 微信内聚焦时自动放大 */
         }
         .form-group input:focus, .form-group select:focus {
             outline: none;
@@ -90,6 +104,7 @@
         }
         .性别选 button {
             padding: 20px;
+            min-height: 48px; /* iOS 触控区域 ≥44px */
             border: 2px solid var(--宣纸深);
             border-radius: 8px;
             background: #fff;
@@ -110,20 +125,27 @@
         .btn-primary {
             width: 100%;
             padding: 14px;
+            min-height: 48px;
             margin-top: 10px;
             border: none;
             border-radius: 6px;
             background: linear-gradient(180deg, var(--朱红) 0%, #6b1f32 100%);
             color: #fff;
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 16px;
             cursor: pointer;
             letter-spacing: 0.1em;
         }
         .btn-primary:hover { background: linear-gradient(180deg, var(--朱红浅) 0%, var(--朱红) 100%); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
         /* 对话步骤 */
-        .chat-container { max-height: 380px; overflow-y: auto; padding-right: 4px; }
+        .chat-container {
+            max-height: min(380px, 50vh);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 4px;
+            -webkit-overflow-scrolling: touch;
+        }
         .chat-container::-webkit-scrollbar { width: 6px; }
         .chat-container::-webkit-scrollbar-thumb { background: var(--宣纸深); border-radius: 3px; }
         .msg { margin-bottom: 16px; display: flex; gap: 10px; }
@@ -155,19 +177,22 @@
         .chat-input-wrap input {
             flex: 1;
             padding: 12px 14px;
+            min-height: 44px;
             border: 1px solid var(--宣纸深);
             border-radius: 8px;
             font-family: inherit;
-            font-size: 0.95rem;
+            font-size: 16px;
         }
         .chat-input-wrap input:focus { outline: none; border-color: var(--金); }
         .chat-input-wrap button {
             padding: 12px 20px;
+            min-height: 44px;
             border: none;
             border-radius: 8px;
             background: var(--朱红);
             color: #fff;
             font-family: inherit;
+            font-size: 16px;
             cursor: pointer;
         }
         .chat-input-wrap button:hover { background: var(--朱红浅); }
@@ -189,7 +214,7 @@
             border-left: 4px solid var(--金);
         }
         .result-card .name { font-size: 1.4rem; color: var(--朱红); margin-bottom: 8px; letter-spacing: 0.2em; }
-        .result-card .desc { font-size: 0.9rem; color: var(--墨); line-height: 1.65; }
+        .result-card .desc { font-size: 0.85rem; color: var(--墨); line-height: 1.75; }
         .more-feedback { margin-top: 20px; }
         .more-feedback textarea {
             width: 100%;
@@ -198,7 +223,7 @@
             border: 1px solid var(--宣纸深);
             border-radius: 8px;
             font-family: inherit;
-            font-size: 0.9rem;
+            font-size: 16px;
             resize: vertical;
         }
         .more-feedback textarea:focus { outline: none; border-color: var(--金); }
@@ -214,29 +239,47 @@
             cursor: pointer;
         }
         .btn-secondary:hover { background: rgba(139,41,66,0.08); }
+        .btn-secondary { min-height: 44px; }
         .footer-steps {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 16px 24px;
+            padding-left: max(24px, env(safe-area-inset-left));
+            padding-right: max(24px, env(safe-area-inset-right));
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
             border-top: 1px solid var(--宣纸深);
             background: rgba(0,0,0,0.02);
         }
         .footer-steps button {
-            padding: 8px 16px;
+            padding: 10px 16px;
+            min-height: 44px;
             border: 1px solid var(--宣纸深);
             border-radius: 6px;
             background: #fff;
             font-family: inherit;
+            font-size: 16px;
             color: var(--墨);
             cursor: pointer;
         }
         .footer-steps button:hover { border-color: var(--金); color: var(--朱红); }
         .hidden { display: none !important; }
+        /* 微信内 & iPhone 12+ 竖屏适配 */
+        @media (max-width: 430px) {
+            body { padding: 12px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+            .header { padding: 18px 16px; }
+            .content { padding: 18px 16px; min-height: 280px; }
+            .chat-container { max-height: min(320px, 45vh); }
+        }
+        @media (max-height: 700px) {
+            .chat-container { max-height: 220px; }
+        }
     </style>
 </head>
 <body>
     <div class="wrap">
         <header class="header">
+            <p style="position:absolute;top:10px;right:16px;font-size:12px;opacity:0.9;"><a href="../index.html" style="color:inherit;">首页</a> · <a href="../calculator.html" style="color:inherit;">计算器</a></p>
             <h1>起名</h1>
             <p class="sub">承古启今</p>
             <div class="干支纹" aria-hidden="true">甲 乙 丙 丁 戊 己 庚 辛 壬 癸 · 子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥</div>
@@ -331,18 +374,55 @@
             birthY: '', birthM: '', birthD: '', birthHour: '',
             chatRound: 0,
             answers: {},
-            questions: [
-                { key: 'career', text: '您心里有没有想过，孩子将来大致会从事哪一类事业？例如从文、从商、从艺、从医等，随便说说即可。' },
-                { key: 'nameLen', text: '名字您更倾向两个字还是三个字？（单名二字，双名三字）' },
-                { key: 'meaning', text: '有没有特别希望名字里带出来的寓意？比如平安、聪慧、坚韧、清雅等。' },
-                { key: 'favoriteChar', text: '有没有对某个字特别钟意，想放进名字里的？' },
-                { key: 'personality', text: '您希望孩子以后性格上更偏哪一类？例如沉稳、开朗、内敛、果敢等。' },
-                { key: 'avoid', text: '有没有特别不希望孩子表现出的性格或行为？我们可以尽量在选字时避开相关意象。' },
-                { key: 'tone', text: '名字读起来您更喜欢响亮一些，还是更温和、含蓄一些？' },
-                { key: 'culture', text: '是否希望名字里带一点古典、诗词或典故的韵味？' },
-                { key: 'other', text: '还有没有其他在意的点？例如谐音、笔画多少、与某位长辈避讳等，都可以说。' }
+            questionTopics: [
+                { key: 'career', variants: [
+                    '您心里有没有想过，孩子将来大致会从事哪一类事业？例如从文、从商、从艺、从医等，随便说说即可。',
+                    '若可以畅想一下，您更希望孩子将来往哪个方向发展？文、理、艺、商都无妨，只是作个参考。',
+                    '职业方面有偏好吗？比如偏文化、技术、艺术或经商，简单说一句就好。'
+                ]},
+                { key: 'nameLen', variants: [
+                    '名字您更倾向两个字还是三个字？（单名二字，双名三字）',
+                    '单名（姓+一字）和双名（姓+两字），您更中意哪种？',
+                    '您打算起单名还是双名？'
+                ]},
+                { key: 'meaning', variants: [
+                    '有没有特别希望名字里带出来的寓意？比如平安、聪慧、坚韧、清雅等。',
+                    '寓意上有什么期待吗？平安、智慧、刚柔、雅正之类的都可以。',
+                    '您希望名字在寓意上偏向哪一类？吉祥、才学、品格、意境都行。'
+                ]},
+                { key: 'favoriteChar', variants: [
+                    '有没有对某个字特别钟意，想放进名字里的？',
+                    '有没有特别喜欢的字，希望尽量用上的？',
+                    '您或家人有没有想放进名字里的字？'
+                ]},
+                { key: 'personality', variants: [
+                    '您希望孩子以后性格上更偏哪一类？例如沉稳、开朗、内敛、果敢等。',
+                    '性格上您更希望孩子偏沉稳还是外向、内敛还是果敢？',
+                    '对孩子性格的期待大概是怎样的？简单说一两个词即可。'
+                ]},
+                { key: 'avoid', variants: [
+                    '有没有特别不希望孩子表现出的性格或行为？我们可以尽量在选字时避开相关意象。',
+                    '有没有想尽量避免的意象或性格倾向？选字时可以留意。',
+                    '名字里希望尽量避开哪种感觉或联想？'
+                ]},
+                { key: 'tone', variants: [
+                    '名字读起来您更喜欢响亮一些，还是更温和、含蓄一些？',
+                    '音韵上偏好响亮有力，还是温和好读？',
+                    '读感上更喜欢大气响亮，还是柔和含蓄？'
+                ]},
+                { key: 'culture', variants: [
+                    '是否希望名字里带一点古典、诗词或典故的韵味？',
+                    '想不想名字带些书卷气或古典味？',
+                    '古典、诗词感在您心里是加分项吗？'
+                ]},
+                { key: 'other', variants: [
+                    '还有没有其他在意的点？例如谐音、笔画多少、与某位长辈避讳等，都可以说。',
+                    '谐音、笔画、长辈避讳等方面还有要求吗？',
+                    '除此之外还有没有要特别注意的？'
+                ]}
             ],
-            suggestedNames: []
+            suggestedNames: [],
+            moreSuggestedNames: []
         };
 
         const steps = [1, 2, 3, 4, 5];
@@ -373,30 +453,78 @@
 
         document.getElementById('btnPrev').onclick = () => { if (state.step > 1) showStep(state.step - 1); };
 
+        const 开场白 = [
+            '您好。接下来会简单问您几个问题，方便我们更贴合您的心意为孩子择名。',
+            '您好，为求名字更合您心意，需要向您请教几件事，咱们逐条聊。',
+            '有劳您稍候。我们会问您几个小问题，以便择名时更贴您的想法。'
+        ];
+
+        function callKimi(action, payload) {
+            return fetch('/api/kimi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action, payload: payload })
+            }).then(function(r) {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            }).then(function(data) {
+                if (data.error) throw new Error(data.error);
+                return data;
+            });
+        }
+
+        function setLastAgentBubbleText(text) {
+            var c = document.getElementById('chatContainer');
+            var last = c && c.querySelector('.msg.agent:last-child .msg-bubble');
+            if (last) last.innerHTML = escapeHtml(text);
+            if (c) c.scrollTop = c.scrollHeight;
+        }
+
         function initChat() {
             const container = document.getElementById('chatContainer');
             const progress = document.getElementById('chatProgress');
             container.innerHTML = '';
             state.chatRound = 0;
             state.answers = {};
-            progress.innerHTML = state.questions.map((_, i) => '<span></span>').join('');
-            appendAgentMsg('您好。接下来会简单问您几个问题，方便我们更贴合您的心意为孩子择名。');
-            setTimeout(() => askNext(), 600);
+            var topics = state.questionTopics.slice();
+            for (var i = topics.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var t = topics[i]; topics[i] = topics[j]; topics[j] = t;
+            }
+            state.questions = topics.map(function(t) {
+                var v = t.variants;
+                return { key: t.key, text: v[Math.floor(Math.random() * v.length)] };
+            });
+            progress.innerHTML = state.questions.map(function() { return '<span></span>'; }).join('');
+            appendAgentMsg(开场白[Math.floor(Math.random() * 开场白.length)]);
+            setTimeout(function() { askNext(); }, 600);
         }
 
         function askNext() {
-            const q = state.questions[state.chatRound];
+            var q = state.questions[state.chatRound];
             if (!q) {
                 document.getElementById('chatInputWrap').classList.add('hidden');
                 document.getElementById('toResult').classList.remove('hidden');
-                document.getElementById('chatProgress').querySelectorAll('span').forEach(s => s.classList.add('done'));
+                document.getElementById('chatProgress').querySelectorAll('span').forEach(function(s) { s.classList.add('done'); });
                 return;
             }
-            document.getElementById('chatProgress').querySelectorAll('span').forEach((s, i) => {
+            document.getElementById('chatProgress').querySelectorAll('span').forEach(function(s, i) {
                 s.classList.toggle('done', i < state.chatRound);
                 s.classList.toggle('current', i === state.chatRound);
             });
-            appendAgentMsg(q.text);
+            var topic = state.questionTopics.filter(function(t) { return t.key === q.key; })[0];
+            var topicVariants = topic ? topic.variants : [];
+            appendAgentMsg('思考中…');
+            callKimi('chat', {
+                topicKey: q.key,
+                topicVariants: topicVariants,
+                history: state.answers
+            }).then(function(data) {
+                var text = (data && data.text && data.text.trim()) ? data.text.trim() : q.text;
+                setLastAgentBubbleText(text);
+            }).catch(function() {
+                setLastAgentBubbleText(q.text);
+            });
         }
 
         function appendAgentMsg(text) {
@@ -441,73 +569,175 @@
             }
         }
 
-        document.getElementById('toResult').onclick = () => {
-            state.suggestedNames = generateNames();
-            renderResults(state.suggestedNames, 'resultCards');
-            document.getElementById('moreFeedback').classList.add('hidden');
-            document.getElementById('moreResultCards').innerHTML = '';
-            document.getElementById('wantMore').classList.remove('hidden');
-            showStep(5);
+        document.getElementById('toResult').onclick = function() {
+            var btn = document.getElementById('toResult');
+            var oldText = btn.textContent;
+            btn.textContent = '生成中…';
+            btn.disabled = true;
+            var payload = {
+                surname: state.surname,
+                gender: state.gender,
+                birthY: state.birthY,
+                birthM: state.birthM,
+                birthD: state.birthD,
+                birthHour: state.birthHour || '',
+                answers: state.answers
+            };
+            callKimi('names', payload).then(function(data) {
+                if (data && data.names && Array.isArray(data.names) && data.names.length > 0) {
+                    state.suggestedNames = data.names;
+                } else {
+                    state.suggestedNames = generateNames();
+                }
+                state.moreSuggestedNames = [];
+                renderResults(state.suggestedNames, 'resultCards');
+                document.getElementById('moreFeedback').classList.add('hidden');
+                document.getElementById('moreResultCards').innerHTML = '';
+                document.getElementById('moreResultTitle').classList.add('hidden');
+                document.getElementById('wantMore').classList.remove('hidden');
+                showStep(5);
+            }).catch(function() {
+                state.suggestedNames = generateNames();
+                state.moreSuggestedNames = [];
+                renderResults(state.suggestedNames, 'resultCards');
+                document.getElementById('moreFeedback').classList.add('hidden');
+                document.getElementById('moreResultCards').innerHTML = '';
+                document.getElementById('moreResultTitle').classList.add('hidden');
+                document.getElementById('wantMore').classList.remove('hidden');
+                showStep(5);
+            }).then(function() {
+                btn.textContent = oldText;
+                btn.disabled = false;
+            });
         };
 
-        const 字库 = {
+        var 五行名 = ['木','火','土','金','水'];
+        var 五行相生 = { 木: '火', 火: '土', 土: '金', 金: '水', 水: '木' };
+        var 五行相克 = { 木: '土', 土: '水', 水: '火', 火: '金', 金: '木' };
+        var 字库 = {
             男: ['睿','轩','宇','涵','浩','梓','辰','泽','俊','博','毅','谦','朗','修','远','安','承','思','明','德'],
             女: ['怡','欣','妍','涵','雅','萱','琳','雨','馨','悦','婉','瑶','慧','静','舒','清','若','诗','韵','宁']
         };
-        const 寓意 = ['聪慧明理','温润如玉','志存高远','安然喜乐','德才兼备','清雅脱俗','坚韧豁达','承古启今'];
+        var 字五行 = {
+            '睿':'水','轩':'土','宇':'土','涵':'水','浩':'水','梓':'木','辰':'土','泽':'水','俊':'火','博':'水','毅':'木','谦':'木','朗':'火','修':'金','远':'土','安':'土','承':'金','思':'金','明':'火','德':'火',
+            '怡':'土','欣':'木','妍':'水','雅':'木','萱':'木','琳':'木','雨':'水','馨':'金','悦':'金','婉':'土','瑶':'火','慧':'水','静':'金','舒':'金','清':'水','若':'木','诗':'金','韵':'土','宁':'火'
+        };
+        var 寓意 = ['聪慧明理','温润如玉','志存高远','安然喜乐','德才兼备','清雅脱俗','坚韧豁达','承古启今'];
 
-        function buildDesc() {
-            const parts = [];
-            parts.push(寓意[Math.floor(Math.random() * 寓意.length)]);
-            if (state.answers.meaning) parts.push('寓意上呼应「' + state.answers.meaning + '」');
-            if (state.answers.personality) parts.push('气质偏' + state.answers.personality);
-            if (state.birthY && state.birthM && state.birthD) parts.push('兼顾生辰格局');
-            if (state.answers.culture && (state.answers.culture.indexOf('是') >= 0 || state.answers.culture.indexOf('希望') >= 0)) parts.push('略带古典韵味');
-            if (parts.length === 1) parts.push('契合您所填写的期望与心意。');
-            return parts.join('，') + '。';
+        function 生辰五行() {
+            var y = parseInt(state.birthY, 10) || 0, m = parseInt(state.birthM, 10) || 0, d = parseInt(state.birthD, 10) || 0;
+            var 天干序 = (y - 4) % 10; if (天干序 < 0) 天干序 += 10;
+            var 年五行 = ['木','木','火','火','土','土','金','金','水','水'][天干序];
+            var 时支 = state.birthHour || '';
+            var 时五行 = { '子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火','午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水' }[时支] || '';
+            var 日主 = 五行名[(y + m + d) % 5];
+            return { 年: 年五行, 时: 时五行, 日主: 日主, 有时辰: !!时支 };
+        }
+
+        function buildDetailDesc(fullName) {
+            var 名 = fullName.slice(state.surname.length);
+            var 八字 = 生辰五行();
+            var lines = [];
+            if (state.birthY && state.birthM && state.birthD) {
+                lines.push('【生辰】' + state.birthY + '年' + state.birthM + '月' + state.birthD + '日' + (state.birthHour ? ' ' + state.birthHour + '时' : ''));
+                lines.push('【八字五行】年柱偏' + 八字.年 + '，日主属' + 八字.日主 + (八字.有时辰 ? '，时支为' + 八字.时 : '') + '。');
+            }
+            var 名字五行 = [];
+            for (var i = 0; i < 名.length; i++) {
+                var c = 名[i];
+                var w = 字五行[c] || 五行名[名.charCodeAt(i) % 5];
+                名字五行.push(c + '属' + w);
+            }
+            if (名字五行.length) {
+                lines.push('【名字五行】' + 名字五行.join('、') + '。');
+                var 与日主 = [];
+                for (var j = 0; j < 名.length; j++) {
+                    var w = 字五行[名[j]] || 五行名[名.charCodeAt(j) % 5];
+                    if (五行相生[八字.日主] === w) 与日主.push(名[j] + '与日主' + 八字.日主 + '相生');
+                    else if (五行相生[w] === 八字.日主) 与日主.push(名[j] + '得日主' + 八字.日主 + '相生');
+                    else if (五行相克[w] === 八字.日主) 与日主.push(名[j] + '与日主' + 八字.日主 + '有克，宜慎');
+                    else if (五行相克[八字.日主] === w) 与日主.push(名[j] + '克日主，可作调候');
+                }
+                if (与日主.length) lines.push('【与八字】' + 与日主.join('；') + '。');
+            }
+            var 寓意句 = 寓意[Math.floor(Math.random() * 寓意.length)];
+            if (state.answers.meaning) 寓意句 += '，寓意呼应「' + state.answers.meaning + '」';
+            if (state.answers.personality) 寓意句 += '，气质偏' + state.answers.personality;
+            lines.push('【寓意】' + 寓意句 + '。');
+            return lines.join('\n');
         }
 
         function generateNames() {
-            const 姓 = state.surname;
-            const 性别 = state.gender === '男' ? '男' : '女';
-            const 字 = 字库[性别] || 字库['男'];
-            const len = (state.answers.nameLen || '').indexOf('三') >= 0 ? 2 : 1;
-            const used = new Set();
-            const out = [];
-            for (let i = 0; i < 3; i++) {
-                let 名 = '';
-                let n = len === 2 ? 2 : 1;
+            var 姓 = state.surname;
+            var 性别 = state.gender === '男' ? '男' : '女';
+            var 字 = 字库[性别] || 字库['男'];
+            var len = (state.answers.nameLen || '').indexOf('三') >= 0 ? 2 : 1;
+            var used = {};
+            var out = [];
+            for (var i = 0; i < 3; i++) {
+                var 名 = '';
+                var n = len === 2 ? 2 : 1;
                 while (n--) {
-                    const idx = Math.floor(Math.random() * 字.length);
+                    var idx = Math.floor(Math.random() * 字.length);
                     名 += 字[idx];
                 }
-                const full = 姓 + 名;
-                if (used.has(full)) { i--; continue; }
-                used.add(full);
-                out.push({ name: full, desc: buildDesc() });
+                var full = 姓 + 名;
+                if (used[full]) { i--; continue; }
+                used[full] = true;
+                out.push({ name: full, desc: buildDetailDesc(full) });
             }
             return out;
         }
 
         function renderResults(list, containerId) {
-            const el = document.getElementById(containerId);
-            el.innerHTML = list.map((item, i) =>
-                '<div class="result-card"><div class="name">' + escapeHtml(item.name) + '</div><div class="desc">' + escapeHtml(item.desc) + '</div></div>'
-            ).join('');
+            var el = document.getElementById(containerId);
+            el.innerHTML = list.map(function(item) {
+                var desc = item.desc.replace(/\n/g, '<br>');
+                return '<div class="result-card"><div class="name">' + escapeHtml(item.name) + '</div><div class="desc">' + desc + '</div></div>';
+            }).join('');
         }
 
-        document.getElementById('wantMore').onclick = () => {
+        document.getElementById('wantMore').onclick = function() {
             document.getElementById('moreFeedback').classList.remove('hidden');
+            document.getElementById('feedbackText').value = '';
         };
 
-        document.getElementById('submitMore').onclick = () => {
-            const feedback = (document.getElementById('feedbackText').value || '').trim();
-            const extra = generateNames();
-            state.suggestedNames = state.suggestedNames.concat(extra);
-            renderResults(extra, 'moreResultCards');
-            document.getElementById('moreResultTitle').classList.remove('hidden');
-            document.getElementById('moreFeedback').classList.add('hidden');
-            document.getElementById('feedbackText').value = '';
+        document.getElementById('submitMore').onclick = function() {
+            var feedback = (document.getElementById('feedbackText').value || '').trim();
+            var btn = document.getElementById('submitMore');
+            var oldText = btn.textContent;
+            btn.textContent = '生成中…';
+            btn.disabled = true;
+            var payload = {
+                surname: state.surname,
+                gender: state.gender,
+                birthY: state.birthY,
+                birthM: state.birthM,
+                birthD: state.birthD,
+                birthHour: state.birthHour || '',
+                answers: state.answers,
+                feedback: feedback
+            };
+            callKimi('names', payload).then(function(data) {
+                var extra = (data && data.names && Array.isArray(data.names) && data.names.length > 0)
+                    ? data.names
+                    : generateNames();
+                state.moreSuggestedNames = (state.moreSuggestedNames || []).concat(extra);
+                renderResults(state.moreSuggestedNames, 'moreResultCards');
+                document.getElementById('moreResultTitle').classList.remove('hidden');
+                document.getElementById('moreFeedback').classList.add('hidden');
+                document.getElementById('feedbackText').value = '';
+            }).catch(function() {
+                var extra = generateNames();
+                state.moreSuggestedNames = (state.moreSuggestedNames || []).concat(extra);
+                renderResults(state.moreSuggestedNames, 'moreResultCards');
+                document.getElementById('moreResultTitle').classList.remove('hidden');
+                document.getElementById('moreFeedback').classList.add('hidden');
+                document.getElementById('feedbackText').value = '';
+            }).then(function() {
+                btn.textContent = oldText;
+                btn.disabled = false;
+            });
         };
     </script>
 </body>

@@ -4,18 +4,71 @@
 
 | 页面 | 路径 | 说明 |
 |------|------|------|
-| 计算器 | `index.html` | 加减乘除、取余，支持键盘 |
+| **首页** | `index.html` | 入口页，可选择进入「计算器」或「起名」 |
+| 计算器 | `calculator.html` | 加减乘除、取余，支持键盘 |
 | 起名 | `naming/index.html` | 按姓氏、性别、生辰与多轮对话生成名字备选，传统文化风格 |
+
+---
+
+## 起名 · 使用 Kimi 大模型（个性化话术与名字）
+
+起名页**不配置也能用**：无 API 时自动用本地话术和本地规则生成名字。
+
+若希望对话和名字解读更个性化，可接入 **Kimi 大模型**。Key 只放在**服务端环境变量**里，不写进代码、不暴露给前端。
+
+### 如何部署到 Vercel（一步步来）
+
+**前提**：代码已经推送到 GitHub（例如仓库 `hkcarrot-lgtm/calculator-app`）。
+
+#### 第一步：用 GitHub 登录 Vercel
+
+1. 浏览器打开 **[vercel.com](https://vercel.com)**。
+2. 点右上角 **Sign Up** 或 **Log In**，选 **Continue with GitHub**，按提示授权。
+3. 登录后会进入 Vercel 的 Dashboard。
+
+#### 第二步：从 GitHub 导入项目
+
+1. 在 Dashboard 点 **Add New…**（或 **Create**）→ **Project**。
+2. 在列表里找到 **calculator-app**（或你的仓库名），点右侧 **Import**。
+3. **Configure Project** 页面一般不用改：
+   - **Project Name** 可保持 `calculator-app`；
+   - **Framework Preset** 选 **Other** 或保持默认；
+   - **Root Directory** 留空；
+   - 不要勾选 “Override” 除非你知道要改。
+4. 直接点 **Deploy**，等几十秒到一两分钟。
+
+#### 第三步：记下访问地址
+
+1. 部署成功后会出现 **Congratulations** 页面。
+2. 点 **Visit** 或记下给你的域名，形如：**https://calculator-app-xxxx.vercel.app**。
+3. 起名页的完整地址就是：**https://calculator-app-xxxx.vercel.app/naming/**。
+
+#### 第四步：配置 Kimi API Key（才能用个性化对话和名字）
+
+1. 在 Vercel 里打开你这个项目（点项目名或从 Dashboard 进）。
+2. 顶部点 **Settings**，左侧点 **Environment Variables**。
+3. 在 **Key** 里填：`KIMI_API_KEY`  
+   在 **Value** 里粘贴你生成好的 Kimi API Key（只填一次，不会显示在页面上）。
+4. **Environment** 勾选 **Production**（想预览环境也用就再勾 **Preview**），点 **Save**。
+5. 到 **Deployments** 页，对**最新一次**部署右侧点 **⋯** → **Redeploy**，等部署完成。
+
+完成后，用 **https://你的项目名.vercel.app/naming/** 打开起名页，对话和名字会走 Kimi；用 GitHub Pages 或本地打开则仍是本地逻辑。
+
+**可选环境变量**（不填则用默认）：  
+- `KIMI_API_BASE`：接口地址，默认 `https://api.moonshot.cn/v1`（K2 等可改为对应 base）。  
+- `KIMI_MODEL`：模型名，默认 `moonshot-v1-32k`。
+
+**请勿**把 API Key 发给我或写进代码、提交到仓库；只在 Vercel 的 Environment Variables 里粘贴即可。
+
+---
 
 ## 本地运行
 
-**计算器**：在项目根目录用浏览器打开 `index.html`，或执行：
+**首页**：打开 `index.html`，可选择「计算器」或「起名」。
 
-```bash
-open index.html
-```
+**计算器**：打开 `calculator.html`，或从首页点击「计算器」。
 
-**起名**：打开 `naming/index.html`，或执行：
+**起名**：打开 `naming/index.html`，或从首页点击「起名」，或执行：
 
 ```bash
 open naming/index.html

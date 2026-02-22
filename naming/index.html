@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>起名 · 承古启今</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --朱红: #8b2942;
+            --朱红浅: #a83d52;
+            --金: #c9a227;
+            --墨: #2c2416;
+            --宣纸: #f7f2e8;
+            --宣纸深: #ebe4d6;
+            --五行木: #3d5c2e;
+            --五行火: #8b2942;
+            --五行土: #b8860b;
+            --五行金: #6b6b6b;
+            --五行水: #2e4a6b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Serif SC', 'KaiTi', '楷体', 'SimSun', serif;
+            background: linear-gradient(180deg, #1a1510 0%, #2c2416 30%, #3d3428 100%);
+            min-height: 100vh;
+            color: var(--墨);
+            padding: 20px;
+        }
+        .wrap {
+            max-width: 520px;
+            margin: 0 auto;
+            background: var(--宣纸);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid rgba(201, 162, 39, 0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--朱红) 0%, #6b1f32 100%);
+            color: var(--金);
+            padding: 24px 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--金);
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: 0.2em; }
+        .header .sub { font-size: 0.75rem; opacity: 0.9; margin-top: 6px; letter-spacing: 0.3em; }
+        .干支纹 {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+        .content { padding: 28px 24px; min-height: 360px; }
+        .step { display: none; }
+        .step.active { display: block; animation: fadeIn 0.35s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .step-title {
+            color: var(--朱红);
+            font-size: 1rem;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--宣纸深);
+            letter-spacing: 0.15em;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; color: var(--墨); font-size: 0.9rem; margin-bottom: 6px; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--宣纸深);
+            border-radius: 6px;
+            background: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--金);
+            box-shadow: 0 0 0 2px rgba(201,162,39,0.2);
+        }
+        .性别选 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .性别选 button {
+            padding: 20px;
+            border: 2px solid var(--宣纸深);
+            border-radius: 8px;
+            background: #fff;
+            font-family: inherit;
+            font-size: 1.1rem;
+            color: var(--墨);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .性别选 button:hover { border-color: var(--金); color: var(--朱红); }
+        .性别选 button.selected { border-color: var(--朱红); background: rgba(139,41,66,0.08); color: var(--朱红); }
+        .生辰行 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .生辰行.full { grid-template-columns: 1fr 1fr; }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(180deg, var(--朱红) 0%, #6b1f32 100%);
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            letter-spacing: 0.1em;
+        }
+        .btn-primary:hover { background: linear-gradient(180deg, var(--朱红浅) 0%, var(--朱红) 100%); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        /* 对话步骤 */
+        .chat-container { max-height: 380px; overflow-y: auto; padding-right: 4px; }
+        .chat-container::-webkit-scrollbar { width: 6px; }
+        .chat-container::-webkit-scrollbar-thumb { background: var(--宣纸深); border-radius: 3px; }
+        .msg { margin-bottom: 16px; display: flex; gap: 10px; }
+        .msg.agent { flex-direction: row; }
+        .msg.user { flex-direction: row-reverse; }
+        .msg-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+        .msg.agent .msg-avatar { background: var(--朱红); }
+        .msg.user .msg-avatar { background: var(--五行水); }
+        .msg-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .msg.agent .msg-bubble { background: var(--宣纸深); color: var(--墨); border-bottom-left-radius: 4px; }
+        .msg.user .msg-bubble { background: rgba(139,41,66,0.12); color: var(--墨); border-bottom-right-radius: 4px; }
+        .chat-input-wrap { display: flex; gap: 8px; margin-top: 16px; }
+        .chat-input-wrap input {
+            flex: 1;
+            padding: 12px 14px;
+            border: 1px solid var(--宣纸深);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .chat-input-wrap input:focus { outline: none; border-color: var(--金); }
+        .chat-input-wrap button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: var(--朱红);
+            color: #fff;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .chat-input-wrap button:hover { background: var(--朱红浅); }
+        .progress-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; }
+        .progress-dots span {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--宣纸深);
+        }
+        .progress-dots span.done { background: var(--金); }
+        .progress-dots span.current { background: var(--朱红); }
+        /* 结果步骤 */
+        .result-cards { display: flex; flex-direction: column; gap: 16px; }
+        .result-card {
+            background: #fff;
+            border: 1px solid var(--宣纸深);
+            border-radius: 10px;
+            padding: 18px;
+            border-left: 4px solid var(--金);
+        }
+        .result-card .name { font-size: 1.4rem; color: var(--朱红); margin-bottom: 8px; letter-spacing: 0.2em; }
+        .result-card .desc { font-size: 0.9rem; color: var(--墨); line-height: 1.65; }
+        .more-feedback { margin-top: 20px; }
+        .more-feedback textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 1px solid var(--宣纸深);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        .more-feedback textarea:focus { outline: none; border-color: var(--金); }
+        .more-feedback .hint { font-size: 0.8rem; color: #888; margin-top: 6px; }
+        .btn-secondary {
+            padding: 10px 18px;
+            margin-top: 10px;
+            border: 1px solid var(--朱红);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--朱红);
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .btn-secondary:hover { background: rgba(139,41,66,0.08); }
+        .footer-steps {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-top: 1px solid var(--宣纸深);
+            background: rgba(0,0,0,0.02);
+        }
+        .footer-steps button {
+            padding: 8px 16px;
+            border: 1px solid var(--宣纸深);
+            border-radius: 6px;
+            background: #fff;
+            font-family: inherit;
+            color: var(--墨);
+            cursor: pointer;
+        }
+        .footer-steps button:hover { border-color: var(--金); color: var(--朱红); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="header">
+            <h1>起名</h1>
+            <p class="sub">承古启今</p>
+            <div class="干支纹" aria-hidden="true">甲 乙 丙 丁 戊 己 庚 辛 壬 癸 · 子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥</div>
+        </header>
+        <main class="content">
+            <!-- 步骤一：姓 -->
+            <section class="step active" id="step1" data-step="1">
+                <h2 class="step-title">一、姓氏</h2>
+                <div class="form-group">
+                    <label for="surname">请输入孩子的姓氏（如：张、欧阳）</label>
+                    <input type="text" id="surname" placeholder="例：李" maxlength="4" autocomplete="off" />
+                </div>
+                <button type="button" class="btn-primary" id="next1">下一步</button>
+            </section>
+            <!-- 步骤二：性别 -->
+            <section class="step" id="step2" data-step="2">
+                <h2 class="step-title">二、性别</h2>
+                <div class="性别选">
+                    <button type="button" data-gender="男" id="btnBoy">男孩</button>
+                    <button type="button" data-gender="女" id="btnGirl">女孩</button>
+                </div>
+                <button type="button" class="btn-primary" id="next2" disabled>下一步</button>
+            </section>
+            <!-- 步骤三：生辰 -->
+            <section class="step" id="step3" data-step="3">
+                <h2 class="step-title">三、出生年月日时</h2>
+                <div class="form-group">
+                    <label>公历出生日期</label>
+                    <div class="生辰行">
+                        <input type="number" id="birthY" placeholder="年" min="1900" max="2100" />
+                        <input type="number" id="birthM" placeholder="月" min="1" max="12" />
+                        <input type="number" id="birthD" placeholder="日" min="1" max="31" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="birthHour">出生时辰（可选，用于八字参考）</label>
+                    <select id="birthHour">
+                        <option value="">请选择时辰</option>
+                        <option value="子">子时 23:00-01:00</option>
+                        <option value="丑">丑时 01:00-03:00</option>
+                        <option value="寅">寅时 03:00-05:00</option>
+                        <option value="卯">卯时 05:00-07:00</option>
+                        <option value="辰">辰时 07:00-09:00</option>
+                        <option value="巳">巳时 09:00-11:00</option>
+                        <option value="午">午时 11:00-13:00</option>
+                        <option value="未">未时 13:00-15:00</option>
+                        <option value="申">申时 15:00-17:00</option>
+                        <option value="酉">酉时 17:00-19:00</option>
+                        <option value="戌">戌时 19:00-21:00</option>
+                        <option value="亥">亥时 21:00-23:00</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-primary" id="next3">下一步</button>
+            </section>
+            <!-- 步骤四：多轮对话 -->
+            <section class="step" id="step4" data-step="4">
+                <h2 class="step-title">四、心意与期望</h2>
+                <p class="hint" style="margin-bottom:12px;font-size:0.85rem;color:#666;">与您聊几句，以便更贴合您的心意为您择名。</p>
+                <div class="progress-dots" id="chatProgress"></div>
+                <div class="chat-container" id="chatContainer"></div>
+                <div class="chat-input-wrap" id="chatInputWrap">
+                    <input type="text" id="chatInput" placeholder="请输入您的想法…" />
+                    <button type="button" id="chatSend">发送</button>
+                </div>
+                <button type="button" class="btn-primary hidden" id="toResult">生成名字</button>
+            </section>
+            <!-- 步骤五：结果 -->
+            <section class="step" id="step5" data-step="5">
+                <h2 class="step-title">五、名字备选</h2>
+                <div class="result-cards" id="resultCards"></div>
+                <div class="more-feedback hidden" id="moreFeedback">
+                    <label>若想获得更多备选，可说说这几位名字中不太满意的地方（如：音、义、字形等）：</label>
+                    <textarea id="feedbackText" placeholder="例如：不喜欢太柔的字、希望更大气一些…"></textarea>
+                    <p class="hint">我们会根据您的反馈再为您斟酌新名。</p>
+                    <button type="button" class="btn-secondary" id="submitMore">再生成几个</button>
+                </div>
+                <p class="step-title hidden" id="moreResultTitle" style="margin-top:20px;">根据您的反馈再斟酌的备选</p>
+                <div id="moreResultCards" class="result-cards" style="margin-top:8px;"></div>
+                <button type="button" class="btn-secondary" id="wantMore" style="margin-top:16px;">想要更多备选</button>
+            </section>
+        </main>
+        <footer class="footer-steps" id="footerSteps">
+            <button type="button" id="btnPrev">上一步</button>
+            <span></span>
+        </footer>
+    </div>
+    <script>
+        const state = {
+            step: 1,
+            surname: '',
+            gender: '',
+            birthY: '', birthM: '', birthD: '', birthHour: '',
+            chatRound: 0,
+            answers: {},
+            questions: [
+                { key: 'career', text: '您心里有没有想过，孩子将来大致会从事哪一类事业？例如从文、从商、从艺、从医等，随便说说即可。' },
+                { key: 'nameLen', text: '名字您更倾向两个字还是三个字？（单名二字，双名三字）' },
+                { key: 'meaning', text: '有没有特别希望名字里带出来的寓意？比如平安、聪慧、坚韧、清雅等。' },
+                { key: 'favoriteChar', text: '有没有对某个字特别钟意，想放进名字里的？' },
+                { key: 'personality', text: '您希望孩子以后性格上更偏哪一类？例如沉稳、开朗、内敛、果敢等。' },
+                { key: 'avoid', text: '有没有特别不希望孩子表现出的性格或行为？我们可以尽量在选字时避开相关意象。' },
+                { key: 'tone', text: '名字读起来您更喜欢响亮一些，还是更温和、含蓄一些？' },
+                { key: 'culture', text: '是否希望名字里带一点古典、诗词或典故的韵味？' },
+                { key: 'other', text: '还有没有其他在意的点？例如谐音、笔画多少、与某位长辈避讳等，都可以说。' }
+            ],
+            suggestedNames: []
+        };
+
+        const steps = [1, 2, 3, 4, 5];
+        function showStep(n) {
+            state.step = n;
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            const stepEl = document.getElementById('step' + n);
+            if (stepEl) stepEl.classList.add('active');
+            document.getElementById('btnPrev').style.visibility = n === 1 ? 'hidden' : 'visible';
+        }
+
+        document.getElementById('next1').onclick = () => {
+            const s = (document.getElementById('surname').value || '').trim();
+            if (!s) { alert('请输入姓氏'); return; }
+            state.surname = s;
+            showStep(2);
+        };
+        document.getElementById('btnBoy').onclick = () => { state.gender = '男'; document.querySelectorAll('.性别选 button').forEach(b => b.classList.remove('selected')); document.getElementById('btnBoy').classList.add('selected'); document.getElementById('next2').disabled = false; };
+        document.getElementById('btnGirl').onclick = () => { state.gender = '女'; document.querySelectorAll('.性别选 button').forEach(b => b.classList.remove('selected')); document.getElementById('btnGirl').classList.add('selected'); document.getElementById('next2').disabled = false; };
+        document.getElementById('next2').onclick = () => showStep(3);
+        document.getElementById('next3').onclick = () => {
+            const y = document.getElementById('birthY').value, m = document.getElementById('birthM').value, d = document.getElementById('birthD').value;
+            if (!y || !m || !d) { alert('请填写出生年月日'); return; }
+            state.birthY = y; state.birthM = m; state.birthD = d; state.birthHour = document.getElementById('birthHour').value || '';
+            showStep(4);
+            initChat();
+        };
+
+        document.getElementById('btnPrev').onclick = () => { if (state.step > 1) showStep(state.step - 1); };
+
+        function initChat() {
+            const container = document.getElementById('chatContainer');
+            const progress = document.getElementById('chatProgress');
+            container.innerHTML = '';
+            state.chatRound = 0;
+            state.answers = {};
+            progress.innerHTML = state.questions.map((_, i) => '<span></span>').join('');
+            appendAgentMsg('您好。接下来会简单问您几个问题，方便我们更贴合您的心意为孩子择名。');
+            setTimeout(() => askNext(), 600);
+        }
+
+        function askNext() {
+            const q = state.questions[state.chatRound];
+            if (!q) {
+                document.getElementById('chatInputWrap').classList.add('hidden');
+                document.getElementById('toResult').classList.remove('hidden');
+                document.getElementById('chatProgress').querySelectorAll('span').forEach(s => s.classList.add('done'));
+                return;
+            }
+            document.getElementById('chatProgress').querySelectorAll('span').forEach((s, i) => {
+                s.classList.toggle('done', i < state.chatRound);
+                s.classList.toggle('current', i === state.chatRound);
+            });
+            appendAgentMsg(q.text);
+        }
+
+        function appendAgentMsg(text) {
+            const c = document.getElementById('chatContainer');
+            const div = document.createElement('div');
+            div.className = 'msg agent';
+            div.innerHTML = '<div class="msg-avatar">师</div><div class="msg-bubble">' + escapeHtml(text) + '</div>';
+            c.appendChild(div);
+            c.scrollTop = c.scrollHeight;
+        }
+
+        function appendUserMsg(text) {
+            const c = document.getElementById('chatContainer');
+            const div = document.createElement('div');
+            div.className = 'msg user';
+            div.innerHTML = '<div class="msg-avatar">您</div><div class="msg-bubble">' + escapeHtml(text) + '</div>';
+            c.appendChild(div);
+            c.scrollTop = c.scrollHeight;
+        }
+
+        function escapeHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        document.getElementById('chatSend').onclick = sendChat;
+        document.getElementById('chatInput').onkeydown = (e) => { if (e.key === 'Enter') sendChat(); };
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const text = (input.value || '').trim();
+            if (!text) return;
+            const q = state.questions[state.chatRound];
+            if (q) {
+                state.answers[q.key] = text;
+                appendUserMsg(text);
+                input.value = '';
+                state.chatRound++;
+                if (state.chatRound < state.questions.length) setTimeout(() => askNext(), 400);
+                else askNext();
+            }
+        }
+
+        document.getElementById('toResult').onclick = () => {
+            state.suggestedNames = generateNames();
+            renderResults(state.suggestedNames, 'resultCards');
+            document.getElementById('moreFeedback').classList.add('hidden');
+            document.getElementById('moreResultCards').innerHTML = '';
+            document.getElementById('wantMore').classList.remove('hidden');
+            showStep(5);
+        };
+
+        const 字库 = {
+            男: ['睿','轩','宇','涵','浩','梓','辰','泽','俊','博','毅','谦','朗','修','远','安','承','思','明','德'],
+            女: ['怡','欣','妍','涵','雅','萱','琳','雨','馨','悦','婉','瑶','慧','静','舒','清','若','诗','韵','宁']
+        };
+        const 寓意 = ['聪慧明理','温润如玉','志存高远','安然喜乐','德才兼备','清雅脱俗','坚韧豁达','承古启今'];
+
+        function buildDesc() {
+            const parts = [];
+            parts.push(寓意[Math.floor(Math.random() * 寓意.length)]);
+            if (state.answers.meaning) parts.push('寓意上呼应「' + state.answers.meaning + '」');
+            if (state.answers.personality) parts.push('气质偏' + state.answers.personality);
+            if (state.birthY && state.birthM && state.birthD) parts.push('兼顾生辰格局');
+            if (state.answers.culture && (state.answers.culture.indexOf('是') >= 0 || state.answers.culture.indexOf('希望') >= 0)) parts.push('略带古典韵味');
+            if (parts.length === 1) parts.push('契合您所填写的期望与心意。');
+            return parts.join('，') + '。';
+        }
+
+        function generateNames() {
+            const 姓 = state.surname;
+            const 性别 = state.gender === '男' ? '男' : '女';
+            const 字 = 字库[性别] || 字库['男'];
+            const len = (state.answers.nameLen || '').indexOf('三') >= 0 ? 2 : 1;
+            const used = new Set();
+            const out = [];
+            for (let i = 0; i < 3; i++) {
+                let 名 = '';
+                let n = len === 2 ? 2 : 1;
+                while (n--) {
+                    const idx = Math.floor(Math.random() * 字.length);
+                    名 += 字[idx];
+                }
+                const full = 姓 + 名;
+                if (used.has(full)) { i--; continue; }
+                used.add(full);
+                out.push({ name: full, desc: buildDesc() });
+            }
+            return out;
+        }
+
+        function renderResults(list, containerId) {
+            const el = document.getElementById(containerId);
+            el.innerHTML = list.map((item, i) =>
+                '<div class="result-card"><div class="name">' + escapeHtml(item.name) + '</div><div class="desc">' + escapeHtml(item.desc) + '</div></div>'
+            ).join('');
+        }
+
+        document.getElementById('wantMore').onclick = () => {
+            document.getElementById('moreFeedback').classList.remove('hidden');
+        };
+
+        document.getElementById('submitMore').onclick = () => {
+            const feedback = (document.getElementById('feedbackText').value || '').trim();
+            const extra = generateNames();
+            state.suggestedNames = state.suggestedNames.concat(extra);
+            renderResults(extra, 'moreResultCards');
+            document.getElementById('moreResultTitle').classList.remove('hidden');
+            document.getElementById('moreFeedback').classList.add('hidden');
+            document.getElementById('feedbackText').value = '';
+        };
+    </script>
+</body>
+</html>

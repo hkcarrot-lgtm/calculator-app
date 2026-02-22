@@ -55,8 +55,8 @@
 完成后，用 **https://你的项目名.vercel.app/naming/** 打开起名页，对话和名字会走 Kimi；用 GitHub Pages 或本地打开则仍是本地逻辑。
 
 **可选环境变量**（不填则用默认）：  
-- `KIMI_API_BASE`：接口地址，默认 `https://api.moonshot.cn/v1`（K2 等可改为对应 base）。  
-- `KIMI_MODEL`：模型名，默认 `moonshot-v1-32k`。
+- `KIMI_API_BASE`：接口地址，默认 `https://api.moonshot.cn/v1`。若你的 Key 来自 **Kimi Code / K2** 且对话仍固定不变，可尝试改为 `https://kimi-k2.ai/api/v1` 后 Redeploy。  
+- `KIMI_MODEL`：模型名，默认 `moonshot-v1-32k`。K2 可用 `kimi-k2.5-preview` 等（以 Kimi 文档为准）。
 
 **请勿**把 API Key 发给我或写进代码、提交到仓库；只在 Vercel 的 Environment Variables 里粘贴即可。
 

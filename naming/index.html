@@ -351,14 +351,17 @@
                 <h2 class="step-title">五、名字备选</h2>
                 <div class="result-cards" id="resultCards"></div>
                 <div class="more-feedback hidden" id="moreFeedback">
-                    <label>若想获得更多备选，可说说这几位名字中不太满意的地方（如：音、义、字形等）：</label>
+                    <label>若想获得更多备选，可说说这几位名字中不太满意的地方（选填）：</label>
                     <textarea id="feedbackText" placeholder="例如：不喜欢太柔的字、希望更大气一些…"></textarea>
-                    <p class="hint">我们会根据您的反馈再为您斟酌新名。</p>
-                    <button type="button" class="btn-secondary" id="submitMore">再生成几个</button>
+                    <p class="hint">我们会根据您的反馈再为您斟酌新名；不填也可直接生成。</p>
+                    <button type="button" class="btn-secondary" id="submitMore">再生成 3 个</button>
                 </div>
-                <p class="step-title hidden" id="moreResultTitle" style="margin-top:20px;">根据您的反馈再斟酌的备选</p>
+                <p class="step-title hidden" id="moreResultTitle" style="margin-top:20px;">更多备选</p>
                 <div id="moreResultCards" class="result-cards" style="margin-top:8px;"></div>
-                <button type="button" class="btn-secondary" id="wantMore" style="margin-top:16px;">想要更多备选</button>
+                <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;">
+                    <button type="button" class="btn-secondary" id="wantMore">想要更多备选</button>
+                    <button type="button" class="btn-secondary" id="directMore">直接再生成 3 个</button>
+                </div>
             </section>
         </main>
         <footer class="footer-steps" id="footerSteps">
@@ -422,7 +425,10 @@
                 ]}
             ],
             suggestedNames: [],
-            moreSuggestedNames: []
+            moreSuggestedNames: [],
+            dialogMessages: [],
+            useDialogMode: false,
+            maxDialogRounds: 14
         };
 
         const steps = [1, 2, 3, 4, 5];
@@ -480,35 +486,80 @@
             if (c) c.scrollTop = c.scrollHeight;
         }
 
+        function getContext() {
+            return {
+                surname: state.surname,
+                gender: state.gender,
+                birthY: state.birthY,
+                birthM: state.birthM,
+                birthD: state.birthD,
+                birthHour: state.birthHour || ''
+            };
+        }
+
+        function showGenerateButton() {
+            document.getElementById('chatInputWrap').classList.add('hidden');
+            document.getElementById('toResult').classList.remove('hidden');
+            var pr = document.getElementById('chatProgress');
+            if (pr) pr.querySelectorAll('span').forEach(function(s) { s.classList.add('done'); });
+        }
+
         function initChat() {
-            const container = document.getElementById('chatContainer');
-            const progress = document.getElementById('chatProgress');
+            var container = document.getElementById('chatContainer');
+            var progress = document.getElementById('chatProgress');
             container.innerHTML = '';
             state.chatRound = 0;
             state.answers = {};
-            var topics = state.questionTopics.slice();
-            for (var i = topics.length - 1; i > 0; i--) {
-                var j = Math.floor(Math.random() * (i + 1));
-                var t = topics[i]; topics[i] = topics[j]; topics[j] = t;
-            }
-            state.questions = topics.map(function(t) {
-                var v = t.variants;
-                return { key: t.key, text: v[Math.floor(Math.random() * v.length)] };
-            });
-            progress.innerHTML = state.questions.map(function() { return '<span></span>'; }).join('');
-            appendAgentMsg(开场白[Math.floor(Math.random() * 开场白.length)]);
-            setTimeout(function() { askNext(); }, 600);
+            state.dialogMessages = [];
+            state.useDialogMode = false;
+            var opening = 开场白[Math.floor(Math.random() * 开场白.length)];
+            appendAgentMsg(opening);
+            state.dialogMessages.push({ role: 'assistant', content: opening });
+            progress.innerHTML = '';
+            appendAgentMsg('思考中…');
+            callKimi('chat', { messages: state.dialogMessages, context: getContext() })
+                .then(function(data) {
+                    var text = (data && data.text) ? data.text.trim() : '';
+                    if (text.toUpperCase() === '[READY]') {
+                        setLastAgentBubbleText('好的，信息已足够，可以为您生成名字了。');
+                        showGenerateButton();
+                        return;
+                    }
+                    state.useDialogMode = true;
+                    if (text) {
+                        setLastAgentBubbleText(text);
+                        state.dialogMessages.push({ role: 'assistant', content: text });
+                    } else {
+                        setLastAgentBubbleText('请随意说说您对名字的期待，例如寓意、风格、字数等。');
+                        state.dialogMessages.push({ role: 'assistant', content: '请随意说说您对名字的期待，例如寓意、风格、字数等。' });
+                    }
+                })
+                .catch(function() {
+                    state.useDialogMode = false;
+                    var topics = state.questionTopics.slice();
+                    for (var i = topics.length - 1; i > 0; i--) {
+                        var j = Math.floor(Math.random() * (i + 1));
+                        var t = topics[i]; topics[i] = topics[j]; topics[j] = t;
+                    }
+                    state.questions = topics.map(function(t) {
+                        var v = t.variants;
+                        return { key: t.key, text: v[Math.floor(Math.random() * v.length)] };
+                    });
+                    progress.innerHTML = state.questions.map(function() { return '<span></span>'; }).join('');
+                    setLastAgentBubbleText(state.questions[0].text);
+                    state.chatRound = 0;
+                });
         }
 
         function askNext() {
+            if (state.useDialogMode) return;
             var q = state.questions[state.chatRound];
             if (!q) {
-                document.getElementById('chatInputWrap').classList.add('hidden');
-                document.getElementById('toResult').classList.remove('hidden');
-                document.getElementById('chatProgress').querySelectorAll('span').forEach(function(s) { s.classList.add('done'); });
+                showGenerateButton();
                 return;
             }
-            document.getElementById('chatProgress').querySelectorAll('span').forEach(function(s, i) {
+            var pr = document.getElementById('chatProgress');
+            if (pr) pr.querySelectorAll('span').forEach(function(s, i) {
                 s.classList.toggle('done', i < state.chatRound);
                 s.classList.toggle('current', i === state.chatRound);
             });
@@ -555,16 +606,45 @@
         document.getElementById('chatInput').onkeydown = (e) => { if (e.key === 'Enter') sendChat(); };
 
         function sendChat() {
-            const input = document.getElementById('chatInput');
-            const text = (input.value || '').trim();
+            var input = document.getElementById('chatInput');
+            var text = (input.value || '').trim();
             if (!text) return;
-            const q = state.questions[state.chatRound];
+            input.value = '';
+            if (state.useDialogMode) {
+                state.dialogMessages.push({ role: 'user', content: text });
+                appendUserMsg(text);
+                appendAgentMsg('思考中…');
+                callKimi('chat', { messages: state.dialogMessages, context: getContext() })
+                    .then(function(data) {
+                        var reply = (data && data.text) ? data.text.trim() : '';
+                        if (reply.toUpperCase() === '[READY]') {
+                            setLastAgentBubbleText('好的，信息已足够，可以为您生成名字了。');
+                            showGenerateButton();
+                            return;
+                        }
+                        var assistantCount = state.dialogMessages.filter(function(m) { return m.role === 'assistant'; }).length;
+                        if (assistantCount >= state.maxDialogRounds) {
+                            setLastAgentBubbleText('已了解不少您的想法，可以为您生成名字了。');
+                            showGenerateButton();
+                            return;
+                        }
+                        if (reply) {
+                            setLastAgentBubbleText(reply);
+                            state.dialogMessages.push({ role: 'assistant', content: reply });
+                        }
+                    })
+                    .catch(function() {
+                        setLastAgentBubbleText('请继续说说您对名字的期待，或点击下方「生成名字」进入下一步。');
+                        state.dialogMessages.push({ role: 'assistant', content: '请继续说说您对名字的期待。' });
+                    });
+                return;
+            }
+            var q = state.questions[state.chatRound];
             if (q) {
                 state.answers[q.key] = text;
                 appendUserMsg(text);
-                input.value = '';
                 state.chatRound++;
-                if (state.chatRound < state.questions.length) setTimeout(() => askNext(), 400);
+                if (state.chatRound < state.questions.length) setTimeout(function() { askNext(); }, 400);
                 else askNext();
             }
         }
@@ -581,7 +661,8 @@
                 birthM: state.birthM,
                 birthD: state.birthD,
                 birthHour: state.birthHour || '',
-                answers: state.answers
+                answers: state.answers,
+                conversation: state.dialogMessages && state.dialogMessages.length ? state.dialogMessages : undefined
             };
             callKimi('names', payload).then(function(data) {
                 if (data && data.names && Array.isArray(data.names) && data.names.length > 0) {
@@ -702,9 +783,8 @@
             document.getElementById('feedbackText').value = '';
         };
 
-        document.getElementById('submitMore').onclick = function() {
-            var feedback = (document.getElementById('feedbackText').value || '').trim();
-            var btn = document.getElementById('submitMore');
+        function doGenerateMore(feedback, fromForm) {
+            var btn = fromForm ? document.getElementById('submitMore') : document.getElementById('directMore');
             var oldText = btn.textContent;
             btn.textContent = '生成中…';
             btn.disabled = true;
@@ -716,7 +796,8 @@
                 birthD: state.birthD,
                 birthHour: state.birthHour || '',
                 answers: state.answers,
-                feedback: feedback
+                feedback: feedback || '',
+                conversation: state.dialogMessages && state.dialogMessages.length ? state.dialogMessages : undefined
             };
             callKimi('names', payload).then(function(data) {
                 var extra = (data && data.names && Array.isArray(data.names) && data.names.length > 0)
@@ -725,19 +806,32 @@
                 state.moreSuggestedNames = (state.moreSuggestedNames || []).concat(extra);
                 renderResults(state.moreSuggestedNames, 'moreResultCards');
                 document.getElementById('moreResultTitle').classList.remove('hidden');
-                document.getElementById('moreFeedback').classList.add('hidden');
-                document.getElementById('feedbackText').value = '';
+                if (fromForm) {
+                    document.getElementById('moreFeedback').classList.add('hidden');
+                    document.getElementById('feedbackText').value = '';
+                }
             }).catch(function() {
                 var extra = generateNames();
                 state.moreSuggestedNames = (state.moreSuggestedNames || []).concat(extra);
                 renderResults(state.moreSuggestedNames, 'moreResultCards');
                 document.getElementById('moreResultTitle').classList.remove('hidden');
-                document.getElementById('moreFeedback').classList.add('hidden');
-                document.getElementById('feedbackText').value = '';
+                if (fromForm) {
+                    document.getElementById('moreFeedback').classList.add('hidden');
+                    document.getElementById('feedbackText').value = '';
+                }
             }).then(function() {
                 btn.textContent = oldText;
                 btn.disabled = false;
             });
+        }
+
+        document.getElementById('submitMore').onclick = function() {
+            var feedback = (document.getElementById('feedbackText').value || '').trim();
+            doGenerateMore(feedback, true);
+        };
+
+        document.getElementById('directMore').onclick = function() {
+            doGenerateMore('', false);
         };
     </script>
 </body>

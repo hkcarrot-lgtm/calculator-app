@@ -43,10 +43,47 @@ export default async function handler(req, res) {
 }
 
 async function chatQuestion(key, payload) {
+  const { messages: dialogMessages, context } = payload;
+  if (dialogMessages && Array.isArray(dialogMessages) && context) {
+    return chatWithFullHistory(key, payload);
+  }
+  return chatWithTopics(key, payload);
+}
+
+async function chatWithFullHistory(key, payload) {
+  const { messages: dialogMessages, context } = payload;
+  const sys = `你是专业、温和的起名顾问，正在与家长多轮对话以收集起名偏好。
+请根据「完整对话记录」准确理解用户每一句的意图（包括隐含的偏好、补充、纠正）。
+每次只回复一句话：要么是你下一句要问用户的话（用于继续收集偏好），要么若已掌握足够信息可进入起名阶段则只回复 exactly: [READY]
+规则：语句简短、自然；不重复用户已说过的内容；可针对用户上一句做追问或换角度问。`;
+  const ctx = `已知：姓氏 ${context.surname}，性别 ${context.gender}，出生 ${context.birthY}年${context.birthM}月${context.birthD}日${context.birthHour ? ' ' + context.birthHour + '时' : ''}。`;
+  const conv = (dialogMessages || []).map((m) => (m.role === 'assistant' ? '师：' : '用户：') + (m.content || '')).join('\n');
+  const ask = conv ? `对话记录：\n${conv}\n\n请根据以上完整对话理解用户意图，只回复你下一句要问的话（一句）；若已可进入起名则只回复 [READY]。` : `请先问用户一个关于起名偏好的问题（如职业倾向、名字字数、寓意、性格期待等），只回复这一句话。`;
+  const messages = [
+    { role: 'system', content: sys },
+    { role: 'user', content: ctx + '\n\n' + ask }
+  ];
+  const res = await fetch(KIMI_BASE + '/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({ model: KIMI_MODEL, messages, temperature: 0.9, max_tokens: 200 })
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(res.status + ' ' + t);
+  }
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (text == null || typeof text !== 'string') throw new Error('Empty Kimi response');
+  return text.trim();
+}
+
+async function chatWithTopics(key, payload) {
   const { topicKey, topicVariants, history } = payload;
-  const sys = `你是一位专业、温和的起名顾问，用自然口语与家长对话，收集起名偏好。每次只问一个问题，语句简短，不要重复用户已说过的内容。`;
+  const sys = `你是一位专业、温和的起名顾问，用自然口语与家长对话，收集起名偏好。
+重要：每次只问一个问题，语句简短。同一主题每次都要换一种说法，不要照抄下面「可参考」里的原句。不要重复用户已说过的内容。`;
   const userParts = [
-    '当前要问的主题是：' + topicKey + '。可参考的提问方式（任选一种或自然改写）：' + (topicVariants || []).join('；'),
+    '当前要问的主题是：' + topicKey + '。可参考的提问方式（仅作参考，请用你自己的话重新问）：' + (topicVariants || []).join('；'),
     '用户已答过的内容：' + JSON.stringify(history || {}, null, 0)
   ];
   const messages = [
@@ -55,30 +92,22 @@ async function chatQuestion(key, payload) {
   ];
   const res = await fetch(KIMI_BASE + '/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + key
-    },
-    body: JSON.stringify({
-      model: KIMI_MODEL,
-      messages,
-      temperature: 0.7,
-      max_tokens: 200
-    })
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({ model: KIMI_MODEL, messages, temperature: 0.9, max_tokens: 200 })
   });
   if (!res.ok) {
     const t = await res.text();
     throw new Error(res.status + ' ' + t);
   }
   const data = await res.json();
-  const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  const text = data.choices?.[0]?.message?.content;
   if (!text || typeof text !== 'string') throw new Error('Empty Kimi response');
   return text.trim();
 }
 
 async function generateNames(key, payload) {
-  const { surname, gender, birthY, birthM, birthD, birthHour, answers } = payload;
-  const sys = `你是起名与八字五行顾问。根据用户提供的姓氏、性别、出生年月日时和偏好，生成 3 个名字，并给出详细解读。
+  const { surname, gender, birthY, birthM, birthD, birthHour, answers, conversation, feedback } = payload;
+  const sys = `你是起名与八字五行顾问。根据用户提供的姓氏、性别、出生年月日时，以及对话中表达的所有偏好与意图，生成 3 个名字，并给出详细解读。${feedback ? '用户对之前备选的反馈（请在新名字中避免或改进）：' + feedback + '。' : ''}
 解读必须包含且明确写出：
 1. 【生辰】公历年月日、时辰（若有）；
 2. 【八字五行】根据年月日时简要说明八字中五行（年柱、日主、时支等）；
@@ -86,9 +115,14 @@ async function generateNames(key, payload) {
 4. 【与八字】名字中字与八字五行的相生、相克关系要写清楚；
 5. 【寓意】名字寓意与用户期望的呼应。
 只输出一个 JSON 数组，每项格式：{"name":"姓+名","desc":"上述分段解读，用换行分隔"}。不要输出其它说明文字。`;
-  const user = `姓氏：${surname}；性别：${gender}；
+  let user = `姓氏：${surname}；性别：${gender}；
 出生：${birthY}年${birthM}月${birthD}日${birthHour ? ' ' + birthHour + '时' : ' 未填时辰'}；
-用户偏好：${JSON.stringify(answers || {})}。`;
+结构化偏好：${JSON.stringify(answers || {})}`;
+  if (conversation && Array.isArray(conversation) && conversation.length > 0) {
+    const convText = conversation.map((m) => (m.role === 'assistant' ? '师：' : '用户：') + (m.content || '')).join('\n');
+    user += `\n\n完整对话（用于准确理解用户意图）：\n${convText}`;
+  }
+  user += '。';
   const messages = [
     { role: 'system', content: sys },
     { role: 'user', content: user }

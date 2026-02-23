@@ -542,7 +542,7 @@
             state.chatRound = 0;
             state.answers = {};
             state.dialogMessages = [];
-            state.useDialogMode = false;
+            state.useDialogMode = true;
             var opening = 开场白[Math.floor(Math.random() * 开场白.length)];
             appendAgentMsg(opening);
             state.dialogMessages.push({ role: 'assistant', content: opening });
@@ -556,7 +556,6 @@
                         showGenerateButton();
                         return;
                     }
-                    state.useDialogMode = true;
                     if (text) {
                         setLastAgentBubbleText(text);
                         state.dialogMessages.push({ role: 'assistant', content: text });
@@ -566,47 +565,9 @@
                     }
                 })
                 .catch(function() {
-                    state.useDialogMode = false;
-                    var topics = state.questionTopics.slice();
-                    for (var i = topics.length - 1; i > 0; i--) {
-                        var j = Math.floor(Math.random() * (i + 1));
-                        var t = topics[i]; topics[i] = topics[j]; topics[j] = t;
-                    }
-                    state.questions = topics.map(function(t) {
-                        var v = t.variants;
-                        return { key: t.key, text: v[Math.floor(Math.random() * v.length)] };
-                    });
-                    progress.innerHTML = state.questions.map(function() { return '<span></span>'; }).join('');
-                    setLastAgentBubbleText(state.questions[0].text);
-                    state.chatRound = 0;
+                    setLastAgentBubbleText('请说说您对名字的期待（如寓意、字数、风格等），我们会根据您的回复继续聊。');
+                    state.dialogMessages.push({ role: 'assistant', content: '请说说您对名字的期待（如寓意、字数、风格等），我们会根据您的回复继续聊。' });
                 });
-        }
-
-        function askNext() {
-            if (state.useDialogMode) return;
-            var q = state.questions[state.chatRound];
-            if (!q) {
-                showGenerateButton();
-                return;
-            }
-            var pr = document.getElementById('chatProgress');
-            if (pr) pr.querySelectorAll('span').forEach(function(s, i) {
-                s.classList.toggle('done', i < state.chatRound);
-                s.classList.toggle('current', i === state.chatRound);
-            });
-            var topic = state.questionTopics.filter(function(t) { return t.key === q.key; })[0];
-            var topicVariants = topic ? topic.variants : [];
-            appendAgentMsg('思考中…');
-            callKimi('chat', {
-                topicKey: q.key,
-                topicVariants: topicVariants,
-                history: state.answers
-            }).then(function(data) {
-                var text = (data && data.text && data.text.trim()) ? data.text.trim() : q.text;
-                setLastAgentBubbleText(text);
-            }).catch(function() {
-                setLastAgentBubbleText(q.text);
-            });
         }
 
         function appendAgentMsg(text) {
@@ -641,43 +602,35 @@
             var text = (input.value || '').trim();
             if (!text) return;
             input.value = '';
-            if (state.useDialogMode) {
-                state.dialogMessages.push({ role: 'user', content: text });
-                appendUserMsg(text);
-                appendAgentMsg('思考中…');
-                callKimi('chat', { messages: state.dialogMessages, context: getContext() })
-                    .then(function(data) {
-                        var reply = (data && data.text) ? data.text.trim() : '';
-                        if (reply.toUpperCase() === '[READY]') {
-                            setLastAgentBubbleText('好的，信息已足够，可以为您生成名字了。');
-                            showGenerateButton();
-                            return;
-                        }
-                        var assistantCount = state.dialogMessages.filter(function(m) { return m.role === 'assistant'; }).length;
-                        if (assistantCount >= state.maxDialogRounds) {
-                            setLastAgentBubbleText('已了解不少您的想法，可以为您生成名字了。');
-                            showGenerateButton();
-                            return;
-                        }
-                        if (reply) {
-                            setLastAgentBubbleText(reply);
-                            state.dialogMessages.push({ role: 'assistant', content: reply });
-                        }
-                    })
-                    .catch(function() {
-                        setLastAgentBubbleText('请继续说说您对名字的期待，或点击下方「生成名字」进入下一步。');
-                        state.dialogMessages.push({ role: 'assistant', content: '请继续说说您对名字的期待。' });
-                    });
-                return;
-            }
-            var q = state.questions[state.chatRound];
-            if (q) {
-                state.answers[q.key] = text;
-                appendUserMsg(text);
-                state.chatRound++;
-                if (state.chatRound < state.questions.length) setTimeout(function() { askNext(); }, 400);
-                else askNext();
-            }
+            state.dialogMessages.push({ role: 'user', content: text });
+            appendUserMsg(text);
+            appendAgentMsg('思考中…');
+            callKimi('chat', { messages: state.dialogMessages, context: getContext() })
+                .then(function(data) {
+                    var reply = (data && data.text) ? data.text.trim() : '';
+                    if (reply.toUpperCase() === '[READY]') {
+                        setLastAgentBubbleText('好的，信息已足够，可以为您生成名字了。');
+                        showGenerateButton();
+                        return;
+                    }
+                    var assistantCount = state.dialogMessages.filter(function(m) { return m.role === 'assistant'; }).length;
+                    if (assistantCount >= state.maxDialogRounds) {
+                        setLastAgentBubbleText('已了解不少您的想法，可以为您生成名字了。');
+                        showGenerateButton();
+                        return;
+                    }
+                    if (reply) {
+                        setLastAgentBubbleText(reply);
+                        state.dialogMessages.push({ role: 'assistant', content: reply });
+                    } else {
+                        setLastAgentBubbleText('请继续说说您的想法。');
+                        state.dialogMessages.push({ role: 'assistant', content: '请继续说说您的想法。' });
+                    }
+                })
+                .catch(function() {
+                    setLastAgentBubbleText('请继续补充您的想法，或点击下方「生成名字」进入下一步。');
+                    state.dialogMessages.push({ role: 'assistant', content: '请继续补充您的想法，或点击下方「生成名字」进入下一步。' });
+                });
         }
 
         document.getElementById('toResult').onclick = function() {

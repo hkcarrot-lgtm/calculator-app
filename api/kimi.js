@@ -52,13 +52,13 @@ async function chatQuestion(key, payload) {
 
 async function chatWithFullHistory(key, payload) {
   const { messages: dialogMessages, context } = payload;
-  const sys = `你是专业、温和的起名顾问，正在与家长多轮对话以收集起名偏好。
-请根据「完整对话记录」准确理解用户每一句的意图（包括隐含的偏好、补充、纠正）。
-每次只回复一句话：要么是你下一句要问用户的话（用于继续收集偏好），要么若已掌握足够信息可进入起名阶段则只回复 exactly: [READY]
-规则：语句简短、自然；不重复用户已说过的内容；可针对用户上一句做追问或换角度问。`;
+  const sys = `你是专业、温和的起名顾问，与家长多轮对话以收集起名偏好。
+重要：不要使用任何固定话术或预设词库。你必须根据「用户刚才说的原话」和完整对话记录，真正理解其意图（字面意思、隐含偏好、情绪、补充、纠正），再自然回复下一句。
+每次只回复一句话：要么是针对用户上一句的理解与追问/延伸（可确认、可追问细节、可换角度），要么若已掌握足够信息可进入起名则只回复 exactly: [READY]
+规则：回复必须紧扣用户刚说的内容；语句简短、自然；不要照搬或罗列固定选项。`;
   const ctx = `已知：姓氏 ${context.surname}，性别 ${context.gender}，出生 ${context.birthY}年${context.birthM}月${context.birthD}日${context.birthHour ? ' ' + context.birthHour + '时' : ''}。`;
   const conv = (dialogMessages || []).map((m) => (m.role === 'assistant' ? '师：' : '用户：') + (m.content || '')).join('\n');
-  const ask = conv ? `对话记录：\n${conv}\n\n请根据以上完整对话理解用户意图，只回复你下一句要问的话（一句）；若已可进入起名则只回复 [READY]。` : `请先问用户一个关于起名偏好的问题（如职业倾向、名字字数、寓意、性格期待等），只回复这一句话。`;
+  const ask = conv ? `对话记录：\n${conv}\n\n请根据上述对话，尤其用户最后一句的原意，理解后只回复你下一句要问的话（一句）；若已可进入起名则只回复 [READY]。` : `请先问用户一个关于起名偏好的开放问题，只回复这一句话。`;
   const messages = [
     { role: 'system', content: sys },
     { role: 'user', content: ctx + '\n\n' + ask }
